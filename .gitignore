@@ -1,0 +1,18 @@
+# Foundry build artifacts
+contracts/out/
+contracts/cache/
+
+# Foundry dependencies (installed via forge install)
+contracts/lib/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# macOS
+.DS_Store
+
+# Node (for backend)
+node_modules/
+dist/
