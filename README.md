@@ -34,7 +34,15 @@ RWA-Tokenisation-Flow/
 │   ├── script/
 │   │   └── Deploy.s.sol     # Deployment script
 │   └── foundry.toml
-└── backend/                 # Node.js / TypeScript API (coming soon)
+└── backend/                 # Node.js / TypeScript API
+    ├── src/
+    │   ├── abis/            # Minimal contract ABIs
+    │   ├── routes/          # balance, preview, transactions
+    │   ├── app.ts           # Express app
+    │   ├── contracts.ts     # ethers.js contract instances
+    │   ├── config.ts        # env config
+    │   └── index.ts         # server entry point
+    └── tests/               # 13 Jest tests
 ```
 
 ---
@@ -62,9 +70,18 @@ cd contracts
 forge install OpenZeppelin/openzeppelin-contracts --no-git
 ```
 
+### 3. Install backend dependencies
+
+```bash
+cd backend
+npm install
+```
+
 ---
 
 ## Running Tests
+
+### Smart contract tests (Foundry)
 
 ```bash
 cd contracts
@@ -78,15 +95,58 @@ Ran 21 tests for test/Treasury.t.sol:TreasuryTest
 Suite result: ok. 21 passed; 0 failed; 0 skipped
 ```
 
-Run with gas snapshots:
+### Backend tests (Jest)
 
 ```bash
-forge test --gas-report
+cd backend
+npm test
+```
+
+Expected output:
+
+```
+Test Suites: 3 passed, 3 total
+Tests:       13 passed, 13 total
 ```
 
 ---
 
-## Deploying
+## Running the Backend
+
+```bash
+cd backend
+cp .env.example .env    # fill in RPC_URL, TOKEN_ADDRESS, TREASURY_ADDRESS
+npm run dev             # starts on http://localhost:3000
+```
+
+### API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Liveness check |
+| `GET` | `/balance/:address` | RWA token balance of a wallet |
+| `GET` | `/preview?amount=<ETH>` | Tokens minted for a given ETH deposit |
+| `GET` | `/transactions/:address` | Deposit & withdrawal history for an address |
+
+#### Example responses
+
+```bash
+# Balance
+GET /balance/0xABCD...
+{ "address": "0xABCD...", "balance": "2000000000000000000000", "formatted": "2000.0", "symbol": "RWA" }
+
+# Deposit preview
+GET /preview?amount=1.5
+{ "ethAmount": "1.5", "tokensToMint": "1500000000000000000000", "formatted": "1500.0", "symbol": "RWA" }
+
+# Transaction history
+GET /transactions/0xABCD...
+{ "address": "0xABCD...", "transactions": [ { "type": "deposit", "txHash": "0x...", ... } ] }
+```
+
+---
+
+## Deploying Contracts
 
 ```bash
 cd contracts
@@ -115,6 +175,8 @@ forge script script/Deploy.s.sol --rpc-url $RPC_URL --broadcast
 
 ## Test Coverage
 
+### Smart Contracts — 21 tests (Foundry)
+
 | Test | Category |
 |------|----------|
 | `test_InitialState` | Sanity |
@@ -136,6 +198,14 @@ forge script script/Deploy.s.sol --rpc-url $RPC_URL --broadcast
 | `test_Revert_ZeroTokensPerEth` | Edge case |
 | `test_TokenOwnerIsAlwaysTreasury` | Invariant |
 | `test_TotalSupplyMatchesAllMints` | Invariant |
+
+### Backend — 13 tests (Jest)
+
+| Test file | Tests |
+|-----------|-------|
+| `balance.test.ts` | Valid balance, invalid address, missing param, RPC failure |
+| `preview.test.ts` | Valid preview, missing param, invalid format, zero amount, RPC failure |
+| `transactions.test.ts` | Deposit + withdrawal history sorted, empty list, invalid address, RPC failure |
 
 ---
 
