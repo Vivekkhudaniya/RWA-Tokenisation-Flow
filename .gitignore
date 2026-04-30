@@ -5,6 +5,9 @@ contracts/cache/
 # Foundry dependencies (installed via forge install)
 contracts/lib/
 
+# Local deployment broadcast artifacts
+contracts/broadcast/
+
 # Environment files
 .env
 .env.*
